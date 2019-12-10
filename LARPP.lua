@@ -467,7 +467,7 @@ luaP_lookup_stat['function'] = function(ls)
 	body = luaP_stat_list(ls)
 
 	if method then
-		table.insert(params, luaO_Node.NameExpr(ls, 'self'))
+		table.insert(params, 1, luaO_Node.NameExpr(ls, 'self'))
 	end
 
 	luaX_syntax_closes(ls, line, 'function', 'end')
