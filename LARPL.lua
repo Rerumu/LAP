@@ -43,9 +43,7 @@ for i = 1, #luaX_binary_p do
 	local t = {left = v[1][1], right = v[1][2]}
 	luaX_binary_p[i] = nil
 
-	for _, n in ipairs(v[2]) do
-		luaX_binary_p[n] = t
-	end
+	for _, n in ipairs(v[2]) do luaX_binary_p[n] = t end
 end
 
 local function luaX_syntax_error(ls, err, ...)
@@ -59,9 +57,7 @@ end
 local function luaX_test_next(ls, name)
 	local ok = ls.token.name == name
 
-	if ok then
-		luaX_next(ls)
-	end
+	if ok then luaX_next(ls) end
 
 	return ok
 end
@@ -77,9 +73,7 @@ local function luaX_syntax_unexpected(ls, other)
 end
 
 local function luaX_syntax_expect(ls, name)
-	if not luaX_test_next(ls, name) then
-		luaX_syntax_unexpected(ls, name)
-	end
+	if not luaX_test_next(ls, name) then luaX_syntax_unexpected(ls, name) end
 end
 
 local function luaX_syntax_closes(ls, line, open, close)
@@ -102,9 +96,7 @@ local function luaX_is_sep(ls, pos)
 	local eq = ls.src:match('^%[(=*)%[', pos)
 	local value = false
 
-	if eq then
-		value = #eq
-	end
+	if eq then value = #eq end
 
 	return value
 end
@@ -116,9 +108,7 @@ local function luaX_str_line(ls, pos, line)
 		local white = src:match('^[\r\n]', pos)
 
 		if white == '\r' then
-			if src:sub(pos + 1, pos + 1) == '\n' then
-				pos = pos + 1
-			end
+			if src:sub(pos + 1, pos + 1) == '\n' then pos = pos + 1 end
 		elseif white ~= '\n' then
 			break
 		end
@@ -130,9 +120,7 @@ local function luaX_str_line(ls, pos, line)
 	return pos, line
 end
 
-local function luaX_skip_line(ls)
-	ls.pos, ls.line = luaX_str_line(ls, ls.pos, ls.line)
-end
+local function luaX_skip_line(ls) ls.pos, ls.line = luaX_str_line(ls, ls.pos, ls.line) end
 
 local function luaX_skip_white(ls)
 	local src = ls.src
@@ -143,9 +131,7 @@ local function luaX_skip_white(ls)
 		white = src:match('^%s', pos)
 		pos = pos + 1
 
-		if white == '\r' or white == '\n' then
-			white = nil
-		end
+		if white == '\r' or white == '\n' then white = nil end
 	until white == nil
 
 	ls.pos = pos - 1
@@ -207,9 +193,7 @@ local function luaX_init_numeric(ls, token)
 	local value = tonumber(num)
 	local name
 
-	if value == nil then
-		luaX_syntax_error(ls, 'malformed number')
-	end
+	if value == nil then luaX_syntax_error(ls, 'malformed number') end
 
 	if math.tointeger(value) then
 		name = '<integer>'
@@ -271,9 +255,7 @@ end
 local function luaX_esc_special(ls, pos)
 	local esc = luaX_escapes[ls.src:sub(pos, pos)]
 
-	if esc == nil then
-		luaX_syntax_error(ls, 'invalid escape sequence')
-	end
+	if esc == nil then luaX_syntax_error(ls, 'invalid escape sequence') end
 
 	return pos, esc
 end
@@ -317,9 +299,7 @@ local function luaX_init_string(ls, token)
 		end
 	end
 
-	if lsc ~= quo then
-		luaX_syntax_error(ls, 'unfinished string')
-	end
+	if lsc ~= quo then luaX_syntax_error(ls, 'unfinished string') end
 
 	ls.pos = pos
 	ls.line = line
@@ -344,9 +324,7 @@ local function luaX_init_long_string(ls, token, sep)
 			for _ = 1, sep + 1 do
 				pos = pos + 1
 				lsc = src:sub(pos, pos)
-				if lsc ~= '=' then
-					break
-				end
+				if lsc ~= '=' then break end
 			end
 
 			if lsc == ']' and (pos - init) == sep then
@@ -359,9 +337,7 @@ local function luaX_init_long_string(ls, token, sep)
 		end
 	end
 
-	if not ok then
-		luaX_syntax_error(ls, 'unfinished long string')
-	end
+	if not ok then luaX_syntax_error(ls, 'unfinished long string') end
 
 	ls.pos = pos
 	ls.line = line
@@ -378,9 +354,7 @@ local function luaX_str_comment(ls)
 		local lsc = src:sub(pos, pos)
 		pos = pos + 1
 
-		if lsc == '\r' or lsc == '\n' then
-			break
-		end
+		if lsc == '\r' or lsc == '\n' then break end
 	end
 
 	ls.pos = pos - 1

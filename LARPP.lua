@@ -57,9 +57,7 @@ local function luaP_name_list(ls)
 	return names
 end
 
-local function luaP_name_str(ls)
-	return luaP_name_to_exp(luaP_name(ls))
-end
+local function luaP_name_str(ls) return luaP_name_to_exp(luaP_name(ls)) end
 
 local function luaP_param_list(ls)
 	local line = ls.line
@@ -68,11 +66,10 @@ local function luaP_param_list(ls)
 	luaX_syntax_expect(ls, '(')
 	while ls.token.name ~= ')' do
 		local var = ls.token.name == '...' and luaP_exp_literal(ls, 'Vararg') or luaP_name(ls)
+
 		table.insert(params, var)
 
-		if not luaX_test_next(ls, ',') then
-			break
-		end
+		if not luaX_test_next(ls, ',') then break end
 	end
 
 	luaX_syntax_closes(ls, line, '(', ')')
@@ -158,9 +155,7 @@ local function luaP_table_constructor(ls)
 			end
 		end
 
-		if not (luaX_test_next(ls, ',') or luaX_test_next(ls, ';')) then
-			break
-		end
+		if not (luaX_test_next(ls, ',') or luaX_test_next(ls, ';')) then break end
 	end
 
 	luaX_syntax_closes(ls, line, '{', '}')
@@ -174,9 +169,7 @@ local function luaP_param_call(ls, func, name, index)
 		local line = ls.line
 
 		luaX_next(ls)
-		if ls.token.name ~= ')' then
-			params = luaP_exp_list(ls)
-		end
+		if ls.token.name ~= ')' then params = luaP_exp_list(ls) end
 
 		luaX_syntax_closes(ls, line, '(', ')')
 	elseif name == '{' then
@@ -267,21 +260,13 @@ luaP_lookup_exp['function'] = function(ls)
 	return luaO_Node.FuncStat(ls, nil, params, body)
 end
 
-luaP_lookup_exp['true'] = function(ls)
-	return luaP_exp_literal(ls, 'Boolean', true)
-end
+luaP_lookup_exp['true'] = function(ls) return luaP_exp_literal(ls, 'Boolean', true) end
 
-luaP_lookup_exp['false'] = function(ls)
-	return luaP_exp_literal(ls, 'Boolean', false)
-end
+luaP_lookup_exp['false'] = function(ls) return luaP_exp_literal(ls, 'Boolean', false) end
 
-luaP_lookup_exp['nil'] = function(ls)
-	return luaP_exp_literal(ls, 'Nil')
-end
+luaP_lookup_exp['nil'] = function(ls) return luaP_exp_literal(ls, 'Nil') end
 
-luaP_lookup_exp['...'] = function(ls)
-	return luaP_exp_literal(ls, 'Vararg')
-end
+luaP_lookup_exp['...'] = function(ls) return luaP_exp_literal(ls, 'Vararg') end
 
 luaP_lookup_exp['<integer>'] = function(ls)
 	return luaP_exp_literal(ls, 'Integer', tonumber(ls.token.slice))
@@ -291,9 +276,7 @@ luaP_lookup_exp['<number>'] = function(ls)
 	return luaP_exp_literal(ls, 'Number', tonumber(ls.token.slice))
 end
 
-luaP_lookup_exp['<string>'] = function(ls)
-	return luaP_exp_literal(ls, 'String', ls.token.slice)
-end
+luaP_lookup_exp['<string>'] = function(ls) return luaP_exp_literal(ls, 'String', ls.token.slice) end
 
 local function luaP_exp_simple(ls)
 	local uroot, ulast = luaP_exp_unary(ls)
@@ -328,7 +311,7 @@ function luaP_expression(ls)
 			local nast = value.nast
 
 			if (nast == 'UnopExpr' and steals) or
-							(nast == 'BinopExpr' and luaX_binary_p[value.operator].right < lopp) then
+				(nast == 'BinopExpr' and luaX_binary_p[value.operator].right < lopp) then
 				last = value
 				value = last.rhs
 			else
@@ -368,9 +351,7 @@ local function luaP_stat_locvar(ls)
 	local names = luaP_name_list(ls)
 	local values
 
-	if luaX_test_next(ls, '=') then
-		values = luaP_exp_list(ls)
-	end
+	if luaX_test_next(ls, '=') then values = luaP_exp_list(ls) end
 
 	return luaO_Node.LocalStat(ls, names, values)
 end
@@ -384,9 +365,7 @@ local function luaP_stat_for_numeric(ls, var)
 	luaX_syntax_expect(ls, ',')
 	limit = luaP_expression(ls)
 
-	if luaX_test_next(ls, ',') then
-		step = luaP_expression(ls)
-	end
+	if luaX_test_next(ls, ',') then step = luaP_expression(ls) end
 
 	return luaO_Node.ForRangeStat(ls, var, limit, step)
 end
@@ -466,9 +445,7 @@ luaP_lookup_stat['function'] = function(ls)
 	params = luaP_param_list(ls)
 	body = luaP_stat_list(ls)
 
-	if method then
-		table.insert(params, 1, luaO_Node.NameExpr(ls, 'self'))
-	end
+	if method then table.insert(params, 1, luaO_Node.NameExpr(ls, 'self')) end
 
 	luaX_syntax_closes(ls, line, 'function', 'end')
 	return luaO_Node.FuncStat(ls, name, params, body)
@@ -494,9 +471,7 @@ luaP_lookup_stat['if'] = function(ls)
 		table.insert(list, sub)
 	until ls.token.name ~= 'elseif'
 
-	if luaX_test_next(ls, 'else') then
-		base = luaP_stat_list(ls)
-	end
+	if luaX_test_next(ls, 'else') then base = luaP_stat_list(ls) end
 
 	luaX_syntax_closes(ls, line, 'if', 'end')
 	return luaO_Node.IfStat(ls, list, base)
@@ -528,9 +503,7 @@ luaP_lookup_stat['return'] = function(ls)
 	local values
 
 	luaX_next(ls) -- `return`
-	if not luaX_follows(ls) then
-		values = luaP_exp_list(ls)
-	end
+	if not luaX_follows(ls) then values = luaP_exp_list(ls) end
 
 	return luaO_Node.ReturnStat(ls, values)
 end
@@ -617,9 +590,7 @@ local function luaP_src2ast(src)
 	do
 		local last = stats[#stats]
 
-		if last and #ls.cmts ~= 0 then
-			last.cmts = table.move(ls.cmts, 1, #ls.cmts, 1, last.cmts or {})
-		end
+		if last and #ls.cmts ~= 0 then last.cmts = table.move(ls.cmts, 1, #ls.cmts, 1, last.cmts or {}) end
 	end
 
 	return stats
