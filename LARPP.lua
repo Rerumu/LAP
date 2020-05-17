@@ -99,25 +99,11 @@ local function luaP_exp_list(ls)
 
 	repeat
 		local e = luaP_expression(ls)
+
 		table.insert(explist, e)
 	until not luaX_test_next(ls, ',')
 
 	return explist
-end
-
-local function luaP_exp_unary(ls)
-	local expr = {}
-	local now = expr
-
-	while luaX_unary_p[ls.token.name] do
-		local unop = luaO_Node.UnopExpr(ls, ls.token.name)
-		luaX_next(ls)
-
-		now.rhs = unop
-		now = unop
-	end
-
-	return expr.rhs, now
 end
 
 local function luaP_table_constructor(ls)
@@ -278,60 +264,54 @@ end
 
 luaP_lookup_exp['<string>'] = function(ls) return luaP_exp_literal(ls, 'String', ls.token.slice) end
 
+local luaP_sub_expr
+
+local function luaP_exp_unary(ls)
+	local un_op = ls.token.name
+
+	luaX_next(ls)
+
+	local rhs = luaP_sub_expr(ls, luaX_unary_pvalue)
+
+	return luaO_Node.UnopExpr(ls, un_op, rhs)
+end
+
 local function luaP_exp_simple(ls)
-	local uroot, ulast = luaP_exp_unary(ls)
 	local func = luaP_lookup_exp[ls.token.name]
-	local expr
 
 	if func then
-		expr = func(ls)
+		return func(ls)
 	else
-		expr = luaP_exp_suffix(ls)
+		return luaP_exp_suffix(ls)
 	end
-
-	if uroot then
-		ulast.rhs = expr
-		expr = uroot
-	end
-
-	return expr
 end
 
-function luaP_expression(ls)
-	local expr = luaP_exp_simple(ls)
+function luaP_sub_expr(ls, min_prec)
+	local lhs
+
+	if luaX_unary_p[ls.token.name] then
+		lhs = luaP_exp_unary(ls)
+	else
+		lhs = luaP_exp_simple(ls)
+	end
 
 	while luaX_binary_p[ls.token.name] do
-		local op = luaO_Node.BinopExpr(ls, ls.token.name)
-		local lopp = luaX_binary_p[op.operator].left
-		local steals = luaX_unary_pvalue < lopp
-		local value = expr
-		local last
+		local name = ls.token.name
+		local prec = luaX_binary_p[name]
 
-		while true do
-			local nast = value.nast
-
-			if (nast == 'UnopExpr' and steals) or
-				(nast == 'BinopExpr' and luaX_binary_p[value.operator].right < lopp) then
-				last = value
-				value = last.rhs
-			else
-				break
-			end
-		end
+		if prec.left < min_prec then break end
 
 		luaX_next(ls)
-		op.rhs = luaP_exp_simple(ls)
-		op.lhs = value
 
-		if last then
-			last.rhs = op
-		else
-			expr = op
-		end
+		local rhs = luaP_sub_expr(ls, prec.right)
+
+		lhs = luaO_Node.BinopExpr(ls, name, lhs, rhs)
 	end
 
-	return expr
+	return lhs
 end
+
+function luaP_expression(ls) return luaP_sub_expr(ls, 0) end
 
 local function luaP_stat_locfunc(ls)
 	local line = ls.line
