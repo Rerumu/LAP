@@ -16,7 +16,9 @@ function luaO_preNode.Name(name) return {name = name} end
 
 function luaO_preNode.Parens(value) return {value = value} end
 
-function luaO_preNode.Table(array, hash) return {array = array, hash = hash} end
+function luaO_preNode.Table(list, size_array, size_hash)
+	return {list = list, size_array = size_array, size_hash = size_hash}
+end
 
 function luaO_preNode.Suffixed(prefix, suffixes) return {prefix = prefix, suffixes = suffixes} end
 

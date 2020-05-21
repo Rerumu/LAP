@@ -25,7 +25,7 @@ do
 	luaX_unary_pvalue = luaX.unary_pvalue
 end
 
-local function luaP_name_to_exp(n)
+local function aux_name_to_exp(n)
 	n.nast = 'Literal'
 	n.tt = 'String'
 	n.value = n.name
@@ -58,7 +58,7 @@ local function luaP_name_list(ls)
 	return names
 end
 
-local function luaP_name_str(ls) return luaP_name_to_exp(luaP_name(ls)) end
+local function luaP_name_str(ls) return aux_name_to_exp(luaP_name(ls)) end
 
 local function luaP_param_list(ls)
 	local line = ls.line
@@ -109,8 +109,9 @@ end
 
 local function luaP_table_constructor(ls)
 	local line = ls.line
-	local array = {}
-	local hash = {}
+	local list = {}
+	local size_array = 0
+	local size_hash = 0
 
 	luaX_next(ls) -- `{`
 	while ls.token.name ~= '}' do
@@ -119,13 +120,14 @@ local function luaP_table_constructor(ls)
 			local dline = ls.line
 
 			luaX_next(ls) -- `[`
-			kvp.index = #array
 			kvp.key = luaP_expression(ls)
 
 			luaX_syntax_closes(ls, dline, '[', ']')
 			luaX_syntax_expect(ls, '=')
 			kvp.value = luaP_expression(ls)
-			table.insert(hash, kvp)
+
+			size_hash = size_hash + 1
+			table.insert(list, kvp)
 		else
 			local sub = luaP_expression(ls)
 			local is_name = sub.nast == 'Suffixed' and #sub.suffixes == 0
@@ -134,12 +136,14 @@ local function luaP_table_constructor(ls)
 				local kvp = {}
 				luaX_next(ls) -- `=`
 
-				kvp.index = #array
-				kvp.key = luaP_name_to_exp(sub)
+				kvp.key = aux_name_to_exp(sub)
 				kvp.value = luaP_expression(ls)
-				table.insert(hash, kvp)
+
+				size_hash = size_hash + 1
+				table.insert(list, kvp)
 			else -- array part
-				table.insert(array, sub)
+				size_array = size_array + 1
+				table.insert(list, sub)
 			end
 		end
 
@@ -147,7 +151,7 @@ local function luaP_table_constructor(ls)
 	end
 
 	luaX_syntax_closes(ls, line, '{', '}')
-	return luaO_Node.Table(ls, array, hash)
+	return luaO_Node.Table(ls, list, size_array, size_hash)
 end
 
 local function luaP_param_call(ls, name, index)
