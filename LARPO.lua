@@ -43,7 +43,9 @@ function luaO_preNode.Goto(label) return {label = label} end
 
 function luaO_preNode.If(list, base) return {list = list, base = base} end
 
-function luaO_preNode.LocalFunction(name, func) return {name = name, func = func} end
+function luaO_preNode.LocalFunction(name, params, body)
+	return {name = name, params = params, body = body}
+end
 
 function luaO_preNode.LocalAssignment(names, values) return {names = names, values = values} end
 

@@ -331,10 +331,9 @@ local function luaP_stat_locfunc(ls)
 	name = luaP_name(ls)
 	params = luaP_param_list(ls)
 	body = luaP_stat_list(ls)
-	func = luaO_Node.Function(ls, name, params, body)
 
 	luaX_syntax_closes(ls, line, 'function', 'end')
-	return luaO_Node.LocalFunction(ls, name, func)
+	return luaO_Node.LocalFunction(ls, name, params, body)
 end
 
 local function luaP_stat_locvar(ls)
