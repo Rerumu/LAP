@@ -347,17 +347,17 @@ local function luaP_stat_locvar(ls)
 end
 
 local function luaP_stat_for_numeric(ls, var)
-	local limit, step
+	local start, last, step
 
 	luaX_next(ls) -- '='
-	var = {name = var, value = luaP_expression(ls)}
+	start = luaP_expression(ls)
 
 	luaX_syntax_expect(ls, ',')
-	limit = luaP_expression(ls)
+	last = luaP_expression(ls)
 
 	if luaX_test_next(ls, ',') then step = luaP_expression(ls) end
 
-	return luaO_Node.ForRange(ls, var, limit, step)
+	return luaO_Node.ForRange(ls, var, start, last, step)
 end
 
 local function luaP_stat_for_generic(ls, var)

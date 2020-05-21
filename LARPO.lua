@@ -32,8 +32,8 @@ function luaO_preNode.Do(body) return {body = body} end
 
 function luaO_preNode.ForIterator(vars, params) return {vars = vars, params = params, body = nil} end
 
-function luaO_preNode.ForRange(var, limit, step)
-	return {var = var, limit = limit, step = step, body = nil}
+function luaO_preNode.ForRange(var, start, last, step)
+	return {var = var, start = start, last = last, step = step, body = nil}
 end
 
 function luaO_preNode.Function(name, params, body) return
