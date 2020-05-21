@@ -136,7 +136,7 @@ local function luaP_table_constructor(ls)
 				local kvp = {}
 				luaX_next(ls) -- `=`
 
-				kvp.key = aux_name_to_exp(sub)
+				kvp.key = aux_name_to_exp(sub.prefix)
 				kvp.value = luaP_expression(ls)
 
 				size_hash = size_hash + 1
