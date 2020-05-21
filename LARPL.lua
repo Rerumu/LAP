@@ -180,11 +180,11 @@ local function luaX_init_symbol(ls, token)
 	return name ~= nil
 end
 
-local function luaX_init_name(ls, token)
-	local _, e, name = ls.src:find('^([%w_]+)', ls.pos)
+local function luaX_init_ident(ls, token)
+	local _, e, ident = ls.src:find('^([%w_]+)', ls.pos)
 
-	token.name = '<name>'
-	token.slice = name
+	token.name = '<ident>'
+	token.slice = ident
 	ls.pos = e + 1
 end
 
@@ -393,7 +393,7 @@ function luaX_next(ls)
 	end
 
 	if src:find('^[%a_]', pos) then
-		luaX_init_name(ls, token)
+		luaX_init_ident(ls, token)
 		luaX_init_keyword(ls, token)
 	elseif src:find('^%d', pos) then
 		luaX_init_numeric(ls, token)

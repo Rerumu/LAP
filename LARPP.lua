@@ -28,7 +28,7 @@ end
 local function aux_exp_ident(ls)
 	local ident = ls.token.slice
 
-	luaX_syntax_expect(ls, '<identifier>')
+	luaX_syntax_expect(ls, '<ident>')
 	return ident
 end
 
@@ -186,7 +186,7 @@ local function luaP_exp_prefix(ls)
 		expr = luaO_Node.Parens(ls, value)
 
 		luaX_syntax_closes(ls, line, '(', ')')
-	elseif name == '<name>' then
+	elseif name == '<ident>' then
 		expr = luaP_name(ls)
 	else
 		luaX_syntax_expect(ls, '<prefix>')
@@ -421,17 +421,17 @@ end
 
 luaP_lookup_stat['function'] = function(ls)
 	local line = ls.line
-	local names, method, params, body
+	local name, method, params, body
 
 	luaX_next(ls) -- `function`
-	names, method = luaP_func_name(ls)
+	name, method = luaP_func_name(ls)
 	params = luaP_param_list(ls)
 	body = luaP_stat_list(ls)
 
 	if method then table.insert(params, 1, luaO_Node.Name(ls, 'self')) end
 
 	luaX_syntax_closes(ls, line, 'function', 'end')
-	return luaO_Node.Function(ls, names, params, body)
+	return luaO_Node.Function(ls, name, params, body)
 end
 
 luaP_lookup_stat['goto'] = function(ls)
