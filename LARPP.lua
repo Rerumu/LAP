@@ -25,6 +25,13 @@ do
 	luaX_unary_pvalue = luaX.unary_pvalue
 end
 
+local function aux_exp_ident(ls)
+	local ident = ls.token.slice
+
+	luaX_syntax_expect(ls, '<identifier>')
+	return ident
+end
+
 local function aux_name_to_exp(n)
 	n.nast = 'Literal'
 	n.tt = 'String'
@@ -39,12 +46,7 @@ local function luaP_exp_literal(ls, name, value)
 	return luaO_Node.Literal(ls, name, value)
 end
 
-local function luaP_name(ls)
-	local name = luaO_Node.Name(ls, ls.token.slice)
-
-	luaX_syntax_expect(ls, '<name>')
-	return name
-end
+local function luaP_name(ls) return luaO_Node.Name(ls, aux_exp_ident(ls)) end
 
 local function luaP_name_list(ls)
 	local names = {}
@@ -57,8 +59,6 @@ local function luaP_name_list(ls)
 
 	return names
 end
-
-local function luaP_name_str(ls) return aux_name_to_exp(luaP_name(ls)) end
 
 local function luaP_param_list(ls)
 	local line = ls.line
@@ -78,21 +78,15 @@ local function luaP_param_list(ls)
 end
 
 local function luaP_func_name(ls)
-	local expr = luaP_name(ls)
+	local list = {aux_exp_ident(ls)}
 	local method
 
-	while luaX_test_next(ls, '.') do
-		local index = luaP_name_str(ls)
-		expr = luaO_Node.Index(ls, expr, index)
-	end
+	while luaX_test_next(ls, '.') do table.insert(list, aux_exp_ident(ls)) end
 
 	method = luaX_test_next(ls, ':')
-	if method then
-		local index = luaP_name_str(ls)
-		expr = luaO_Node.Index(ls, expr, index)
-	end
+	if method then table.insert(list, aux_exp_ident(ls)) end
 
-	return expr, method
+	return list, method
 end
 
 local function luaP_exp_list(ls)
@@ -213,13 +207,13 @@ local function luaP_exp_suffixed(ls)
 			local index
 
 			luaX_next(ls)
-			index = luaP_name_str(ls)
+			index = aux_name_to_exp(luaP_name(ls))
 			suffix = luaO_Node.Index(ls, index)
 		elseif name == ':' then
 			local index
 
 			luaX_next(ls)
-			index = luaP_name_str(ls)
+			index = aux_exp_ident(ls)
 			suffix = luaP_param_call(ls, ls.token.name, index)
 		elseif name == '[' then
 			local line = ls.line
@@ -427,24 +421,24 @@ end
 
 luaP_lookup_stat['function'] = function(ls)
 	local line = ls.line
-	local name, method, params, body
+	local names, method, params, body
 
 	luaX_next(ls) -- `function`
-	name, method = luaP_func_name(ls)
+	names, method = luaP_func_name(ls)
 	params = luaP_param_list(ls)
 	body = luaP_stat_list(ls)
 
 	if method then table.insert(params, 1, luaO_Node.Name(ls, 'self')) end
 
 	luaX_syntax_closes(ls, line, 'function', 'end')
-	return luaO_Node.Function(ls, name, params, body)
+	return luaO_Node.Function(ls, names, params, body)
 end
 
 luaP_lookup_stat['goto'] = function(ls)
 	local label
 
 	luaX_next(ls) -- `goto`
-	label = luaP_name(ls)
+	label = aux_exp_ident(ls)
 
 	return luaO_Node.Goto(ls, label)
 end
@@ -516,7 +510,7 @@ luaP_lookup_stat['::'] = function(ls)
 	local label
 
 	luaX_next(ls) -- `::`
-	label = luaP_name(ls)
+	label = aux_exp_ident(ls)
 
 	luaX_syntax_closes(ls, line, '::', '::')
 	return luaO_Node.Label(ls, label)

@@ -43,6 +43,8 @@ function luaO_preNode.Goto(label) return {label = label} end
 
 function luaO_preNode.If(list, base) return {list = list, base = base} end
 
+function luaO_preNode.Label(label) return {label = label} end
+
 function luaO_preNode.LocalFunction(name, params, body)
 	return {name = name, params = params, body = body}
 end
@@ -54,8 +56,6 @@ function luaO_preNode.Repeat(cond, body) return {cond = cond, body = body} end
 function luaO_preNode.Return(values) return {values = values} end
 
 function luaO_preNode.While(cond, body) return {cond = cond, body = body} end
-
-function luaO_preNode.Label(label) return {label = label} end
 
 for name, func in pairs(luaO_preNode) do -- wraps funcs to hold debug info
 	luaO_Node[name] = function(ls, ...)
