@@ -1,24 +1,24 @@
 -- stream based Lua parser and error utilities module
-local luaX_next
-local luaX_keywords = {
+local lex_next
+local lex_keywords = {
 	'and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'goto', 'if', 'in',
 		'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while',
 }
 
-local luaX_symbols = {
+local lex_symbols = {
 	'"', '#', '%', '&', '(', ')', '*', '+', ',', '-', '--', '.', '..', '...', '/', '//', ':', '::',
 		';', '<', '<<', '<=', '=', '==', '>', '>=', '>>', '[', '\'', ']', '^', '{', '|', '}', '~', '~=',
 }
 
-local luaX_unary_pvalue = 22
-local luaX_unary_p = {'#', '+', '-', '~', 'not'}
-local luaX_binary_p = {
+local lex_unary_bind_value = 22
+local lex_unary_bind = {'#', '+', '-', '~', 'not'}
+local lex_binary_bind = {
 	{{1, 2}, {'or'}}, {{3, 4}, {'and'}}, {{5, 6}, {'<', '<=', '==', '>', '>=', '~='}}, {{7, 8}, {'|'}},
 		{{9, 10}, {'~'}}, {{11, 12}, {'&'}}, {{13, 14}, {'<<', '>>'}}, {{16, 15}, {'..'}},
 		{{17, 18}, {'+', '-'}}, {{19, 20}, {'%', '*', '/', '//'}}, {{24, 23}, {'^'}},
 }
 
-local luaX_escapes = {
+local lex_escapes = {
 	['"'] = '"',
 	['\''] = '\'',
 	['\\'] = '\\',
@@ -33,20 +33,20 @@ local luaX_escapes = {
 	['z'] = '\z',
 }
 
-for i = 1, #luaX_unary_p do
-	luaX_unary_p[luaX_unary_p[i]] = luaX_unary_pvalue
-	luaX_unary_p[i] = nil
+for i = 1, #lex_unary_bind do
+	lex_unary_bind[lex_unary_bind[i]] = lex_unary_bind_value
+	lex_unary_bind[i] = nil
 end
 
-for i = 1, #luaX_binary_p do
-	local v = luaX_binary_p[i]
+for i = 1, #lex_binary_bind do
+	local v = lex_binary_bind[i]
 	local t = {left = v[1][1], right = v[1][2]}
-	luaX_binary_p[i] = nil
+	lex_binary_bind[i] = nil
 
-	for _, n in ipairs(v[2]) do luaX_binary_p[n] = t end
+	for _, n in ipairs(v[2]) do lex_binary_bind[n] = t end
 end
 
-local function luaX_syntax_error(ls, err, ...)
+local function lex_syntax_error(ls, err, ...)
 	local msg = string.format(err, ...)
 	local name = ls.name or string.format('[string %q]', ls.src:sub(1, 12))
 	local line = ls.line
@@ -54,45 +54,45 @@ local function luaX_syntax_error(ls, err, ...)
 	error(string.format('%s:%i: %s', name, line, msg), 0)
 end
 
-local function luaX_test_next(ls, name)
+local function lex_test_next(ls, name)
 	local ok = ls.token.name == name
 
-	if ok then luaX_next(ls) end
+	if ok then lex_next(ls) end
 
 	return ok
 end
 
-local function luaX_syntax_unexpected(ls, other)
+local function lex_syntax_unexpected(ls, other)
 	local sn = ls.token.slice or ls.token.name
 
 	if other then
-		luaX_syntax_error(ls, 'unexpected `%s` (missing `%s`)', sn, other)
+		lex_syntax_error(ls, 'unexpected `%s` (missing `%s`)', sn, other)
 	else
-		luaX_syntax_error(ls, 'unexpected `%s`', sn)
+		lex_syntax_error(ls, 'unexpected `%s`', sn)
 	end
 end
 
-local function luaX_syntax_expect(ls, name)
-	if not luaX_test_next(ls, name) then luaX_syntax_unexpected(ls, name) end
+local function lex_syntax_expect(ls, name)
+	if not lex_test_next(ls, name) then lex_syntax_unexpected(ls, name) end
 end
 
-local function luaX_syntax_closes(ls, line, open, close)
-	if not luaX_test_next(ls, close) then
+local function lex_syntax_closes(ls, line, open, close)
+	if not lex_test_next(ls, close) then
 		if ls.line == line then
-			luaX_syntax_error(ls, 'no `%s` closing `%s`', close, open)
+			lex_syntax_error(ls, 'no `%s` closing `%s`', close, open)
 		else
-			luaX_syntax_error(ls, 'no `%s` closing `%s` (at line %i)', close, open, line)
+			lex_syntax_error(ls, 'no `%s` closing `%s` (at line %i)', close, open, line)
 		end
 	end
 end
 
-local function luaX_follows(ls)
+local function lex_follows(ls)
 	local nm = ls.token.name
 
 	return nm == 'else' or nm == 'elseif' or nm == 'end' or nm == 'until' or nm == '<eos>'
 end
 
-local function luaX_is_sep(ls, pos)
+local function lex_is_sep(ls, pos)
 	local eq = ls.src:match('^%[(=*)%[', pos)
 	local value = false
 
@@ -101,7 +101,7 @@ local function luaX_is_sep(ls, pos)
 	return value
 end
 
-local function luaX_str_line(ls, pos, line)
+local function lex_str_line(ls, pos, line)
 	local src = ls.src
 
 	while true do
@@ -120,9 +120,9 @@ local function luaX_str_line(ls, pos, line)
 	return pos, line
 end
 
-local function luaX_skip_line(ls) ls.pos, ls.line = luaX_str_line(ls, ls.pos, ls.line) end
+local function lex_skip_line(ls) ls.pos, ls.line = lex_str_line(ls, ls.pos, ls.line) end
 
-local function luaX_skip_white(ls)
+local function lex_skip_white(ls)
 	local src = ls.src
 	local pos = ls.pos
 	local white
@@ -137,12 +137,12 @@ local function luaX_skip_white(ls)
 	ls.pos = pos - 1
 end
 
-local function luaX_init_keyword(_, token)
+local function lex_init_keyword(_, token)
 	local slice = token.slice
 	local name
 
-	for i = #luaX_keywords, 1, -1 do
-		local k = luaX_keywords[i]
+	for i = #lex_keywords, 1, -1 do
+		local k = lex_keywords[i]
 
 		if slice == k then
 			name = k
@@ -156,13 +156,13 @@ local function luaX_init_keyword(_, token)
 	end
 end
 
-local function luaX_init_symbol(ls, token)
+local function lex_init_symbol(ls, token)
 	local src = ls.src
 	local pos = ls.pos
 	local name
 
-	for i = #luaX_symbols, 1, -1 do
-		local s = luaX_symbols[i]
+	for i = #lex_symbols, 1, -1 do
+		local s = lex_symbols[i]
 		local n = pos + #s
 
 		if s == src:sub(pos, n - 1) then
@@ -180,7 +180,7 @@ local function luaX_init_symbol(ls, token)
 	return name ~= nil
 end
 
-local function luaX_init_ident(ls, token)
+local function lex_init_ident(ls, token)
 	local _, e, ident = ls.src:find('^([%w_]+)', ls.pos)
 
 	token.name = '<ident>'
@@ -188,12 +188,12 @@ local function luaX_init_ident(ls, token)
 	ls.pos = e + 1
 end
 
-local function luaX_init_numeric(ls, token)
+local function lex_init_numeric(ls, token)
 	local _, e, num = ls.src:find('^([%x%.xX]*[eEpP]?[+-]?%x+)', ls.pos)
 	local value = tonumber(num)
 	local name
 
-	if value == nil then luaX_syntax_error(ls, 'malformed number') end
+	if value == nil then lex_syntax_error(ls, 'malformed number') end
 
 	if math.tointeger(value) then
 		name = '<integer>'
@@ -206,20 +206,20 @@ local function luaX_init_numeric(ls, token)
 	token.slice = num
 end
 
-local function luaX_esc_hexadecimal(ls, pos)
+local function lex_esc_hexadecimal(ls, pos)
 	local _, e, num = ls.src:find('^(%x%x)', pos + 1)
 	local esc
 
 	if num then
 		esc = string.char(tonumber(num))
 	else
-		luaX_syntax_error(ls, 'should be 2 hexadecimal digits')
+		lex_syntax_error(ls, 'should be 2 hexadecimal digits')
 	end
 
 	return e, esc
 end
 
-local function luaX_esc_unicode(ls, pos)
+local function lex_esc_unicode(ls, pos)
 	local _, e, num = ls.src:find('^{(%x+)}', pos + 1)
 	local esc
 
@@ -229,16 +229,16 @@ local function luaX_esc_unicode(ls, pos)
 		if num < 0x11000 then
 			esc = utf8.char(num)
 		else
-			luaX_syntax_error(ls, '`%X` should be between 0 and 10FFF', num)
+			lex_syntax_error(ls, '`%X` should be between 0 and 10FFF', num)
 		end
 	else
-		luaX_syntax_error(ls, 'should be hexadecimal digits')
+		lex_syntax_error(ls, 'should be hexadecimal digits')
 	end
 
 	return e, esc
 end
 
-local function luaX_esc_decimal(ls, pos)
+local function lex_esc_decimal(ls, pos)
 	local _, e, num = ls.src:find('(%d+)', pos)
 	local esc
 	num = tonumber(num)
@@ -246,21 +246,21 @@ local function luaX_esc_decimal(ls, pos)
 	if num < 256 then
 		esc = string.char(num)
 	else
-		luaX_syntax_error(ls, '`%i` should be between 0 and 255', num)
+		lex_syntax_error(ls, '`%i` should be between 0 and 255', num)
 	end
 
 	return e, esc
 end
 
-local function luaX_esc_special(ls, pos)
-	local esc = luaX_escapes[ls.src:sub(pos, pos)]
+local function lex_esc_special(ls, pos)
+	local esc = lex_escapes[ls.src:sub(pos, pos)]
 
-	if esc == nil then luaX_syntax_error(ls, 'invalid escape sequence') end
+	if esc == nil then lex_syntax_error(ls, 'invalid escape sequence') end
 
 	return pos, esc
 end
 
-local function luaX_init_string(ls, token)
+local function lex_init_string(ls, token)
 	local src, len = ls.src, #ls.src
 	local line = ls.line
 	local pos = ls.pos
@@ -279,18 +279,18 @@ local function luaX_init_string(ls, token)
 			lsc = src:sub(pos, pos)
 
 			if lsc == 'x' then
-				pos, esc = luaX_esc_hexadecimal(ls, pos)
+				pos, esc = lex_esc_hexadecimal(ls, pos)
 			elseif lsc == 'u' then
-				pos, esc = luaX_esc_unicode(ls, pos)
+				pos, esc = lex_esc_unicode(ls, pos)
 			elseif tonumber(lsc) then
-				pos, esc = luaX_esc_decimal(ls, pos)
+				pos, esc = lex_esc_decimal(ls, pos)
 			else
-				pos, esc = luaX_esc_special(ls, pos)
+				pos, esc = lex_esc_special(ls, pos)
 			end
 
 			table.insert(str, esc)
 		elseif lsc == '\r' or lsc == '\n' then
-			pos, line = luaX_str_line(ls, pos, line)
+			pos, line = lex_str_line(ls, pos, line)
 		elseif lsc == quo then
 			pos = pos + 1
 			break
@@ -299,7 +299,7 @@ local function luaX_init_string(ls, token)
 		end
 	end
 
-	if lsc ~= quo then luaX_syntax_error(ls, 'unfinished string') end
+	if lsc ~= quo then lex_syntax_error(ls, 'unfinished string') end
 
 	ls.pos = pos
 	ls.line = line
@@ -307,7 +307,7 @@ local function luaX_init_string(ls, token)
 	token.slice = table.concat(str)
 end
 
-local function luaX_init_long_string(ls, token, sep)
+local function lex_init_long_string(ls, token, sep)
 	local src, len = ls.src, #ls.src
 	local line = ls.line
 	local stt = ls.pos + sep + 2
@@ -318,7 +318,7 @@ local function luaX_init_long_string(ls, token, sep)
 		local lsc = src:sub(pos, pos)
 
 		if lsc == '\r' or lsc == '\n' then
-			pos, line = luaX_str_line(ls, pos, line)
+			pos, line = lex_str_line(ls, pos, line)
 		elseif lsc == ']' then
 			local init = pos + 1
 			for _ = 1, sep + 1 do
@@ -337,7 +337,7 @@ local function luaX_init_long_string(ls, token, sep)
 		end
 	end
 
-	if not ok then luaX_syntax_error(ls, 'unfinished long string') end
+	if not ok then lex_syntax_error(ls, 'unfinished long string') end
 
 	ls.pos = pos
 	ls.line = line
@@ -345,7 +345,7 @@ local function luaX_init_long_string(ls, token, sep)
 	token.slice = src:sub(stt, pos - sep - 3)
 end
 
-local function luaX_str_comment(ls)
+local function lex_str_comment(ls)
 	local src, len = ls.src, #ls.src
 	local stt = ls.pos + 2
 	local pos = stt
@@ -361,7 +361,7 @@ local function luaX_str_comment(ls)
 	return src:sub(stt, pos - 2)
 end
 
-function luaX_next(ls)
+function lex_next(ls)
 	local token = {}
 	local src = ls.src
 	local pos
@@ -369,21 +369,21 @@ function luaX_next(ls)
 	while true do
 		pos = ls.pos
 		if src:find('^[\r\n]', pos) then -- newline
-			luaX_skip_line(ls)
+			lex_skip_line(ls)
 		elseif src:find('^%s', pos) then -- whitespace
-			luaX_skip_white(ls)
+			lex_skip_white(ls)
 		elseif src:find('^%-%-', pos) then -- comments
-			local sep = luaX_is_sep(ls, pos + 2)
+			local sep = lex_is_sep(ls, pos + 2)
 			local cmt
 
 			if sep then
 				ls.pos = pos + 2
-				luaX_init_long_string(ls, token, sep)
+				lex_init_long_string(ls, token, sep)
 
 				token.name = nil
 				cmt = token.slice
 			else
-				cmt = luaX_str_comment(ls)
+				cmt = lex_str_comment(ls)
 			end
 
 			table.insert(ls.comment, cmt)
@@ -393,45 +393,45 @@ function luaX_next(ls)
 	end
 
 	if src:find('^[%a_]', pos) then
-		luaX_init_ident(ls, token)
-		luaX_init_keyword(ls, token)
+		lex_init_ident(ls, token)
+		lex_init_keyword(ls, token)
 	elseif src:find('^%d', pos) then
-		luaX_init_numeric(ls, token)
-	elseif src:find('^%p', pos) and luaX_init_symbol(ls, token) then
+		lex_init_numeric(ls, token)
+	elseif src:find('^%p', pos) and lex_init_symbol(ls, token) then
 		local name = token.name
 
 		if name == '.' and src:find('^%d', pos + 1) then -- number
 			ls.pos = ls.pos - 1
-			luaX_init_numeric(ls, token)
+			lex_init_numeric(ls, token)
 		elseif name == '"' or name == '\'' then -- string
 			ls.pos = ls.pos - 1
-			luaX_init_string(ls, token)
+			lex_init_string(ls, token)
 		elseif name == '[' then -- long string
-			local sep = luaX_is_sep(ls, ls.pos - 1)
+			local sep = lex_is_sep(ls, ls.pos - 1)
 
 			if sep then
 				ls.pos = ls.pos - 1
-				luaX_init_long_string(ls, token, sep)
+				lex_init_long_string(ls, token, sep)
 			end
 		end
 	elseif pos > #src then
 		token.name = '<eos>'
 	else
-		luaX_syntax_unexpected(ls)
+		lex_syntax_unexpected(ls)
 	end
 
 	ls.token = token
 end
 
 return {
-	binary_p = luaX_binary_p,
-	follows = luaX_follows,
-	next = luaX_next,
-	syntax_closes = luaX_syntax_closes,
-	syntax_error = luaX_syntax_error,
-	syntax_expect = luaX_syntax_expect,
-	syntax_unexpected = luaX_syntax_unexpected,
-	test_next = luaX_test_next,
-	unary_p = luaX_unary_p,
-	unary_pvalue = luaX_unary_pvalue,
+	binary_bind = lex_binary_bind,
+	follows = lex_follows,
+	next = lex_next,
+	syntax_closes = lex_syntax_closes,
+	syntax_error = lex_syntax_error,
+	syntax_expect = lex_syntax_expect,
+	syntax_unexpected = lex_syntax_unexpected,
+	test_next = lex_test_next,
+	unary_bind = lex_unary_bind,
+	unary_bind_value = lex_unary_bind_value,
 }

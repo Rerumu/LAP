@@ -1,63 +1,60 @@
 -- simple object constructors for nodes and states module
-local luaO_Node = {}
-local luaO_Node = {}
+local Node = {}
 
-function luaO_Node.BinOp(op, lhs, rhs) return {operator = op, lhs = lhs, rhs = rhs} end
+function Node.BinOp(op, lhs, rhs) return {operator = op, lhs = lhs, rhs = rhs} end
 
-function luaO_Node.CallMethod(name, params) return {name = name, params = params} end
+function Node.CallMethod(name, params) return {name = name, params = params} end
 
-function luaO_Node.Call(params) return {params = params} end
+function Node.Call(params) return {params = params} end
 
-function luaO_Node.Index(index) return {index = index} end
+function Node.Index(index) return {index = index} end
 
-function luaO_Node.Literal(tt, value) return {tt = tt, value = value} end
+function Node.Literal(tt, value) return {tt = tt, value = value} end
 
-function luaO_Node.Name(name) return {name = name} end
+function Node.Name(name) return {name = name} end
 
-function luaO_Node.Parens(value) return {value = value} end
+function Node.Parens(value) return {value = value} end
 
-function luaO_Node.Table(list, size_array, size_hash)
+function Node.Table(list, size_array, size_hash)
 	return {list = list, size_array = size_array, size_hash = size_hash}
 end
 
-function luaO_Node.Suffixed(prefix, suffixes) return {prefix = prefix, suffixes = suffixes} end
+function Node.Suffixed(prefix, suffixes) return {prefix = prefix, suffixes = suffixes} end
 
-function luaO_Node.UnOp(op, rhs) return {operator = op, rhs = rhs} end
+function Node.UnOp(op, rhs) return {operator = op, rhs = rhs} end
 
-function luaO_Node.Assignment(lhs, rhs) return {lhs = lhs, rhs = rhs} end
+function Node.Assignment(lhs, rhs) return {lhs = lhs, rhs = rhs} end
 
-function luaO_Node.Break() return {} end -- nothing lol
+function Node.Break() return {} end -- nothing lol
 
-function luaO_Node.Do(body) return {body = body} end
+function Node.Do(body) return {body = body} end
 
-function luaO_Node.ForIterator(vars, params) return {vars = vars, params = params, body = nil} end
+function Node.ForIterator(vars, params) return {vars = vars, params = params, body = nil} end
 
-function luaO_Node.ForRange(var, start, last, step)
+function Node.ForRange(var, start, last, step)
 	return {var = var, start = start, last = last, step = step, body = nil}
 end
 
-function luaO_Node.Function(name, params, body) return {name = name, params = params, body = body} end
+function Node.Function(name, params, body) return {name = name, params = params, body = body} end
 
-function luaO_Node.Goto(label) return {label = label} end
+function Node.Goto(label) return {label = label} end
 
-function luaO_Node.If(list, base) return {list = list, base = base} end
+function Node.If(list, base) return {list = list, base = base} end
 
-function luaO_Node.Label(label) return {label = label} end
+function Node.Label(label) return {label = label} end
 
-function luaO_Node.LocalFunction(name, params, body)
-	return {name = name, params = params, body = body}
-end
+function Node.LocalFunction(name, params, body) return {name = name, params = params, body = body} end
 
-function luaO_Node.LocalAssignment(names, values) return {names = names, values = values} end
+function Node.LocalAssignment(names, values) return {names = names, values = values} end
 
-function luaO_Node.Repeat(cond, body) return {cond = cond, body = body} end
+function Node.Repeat(cond, body) return {cond = cond, body = body} end
 
-function luaO_Node.Return(values) return {values = values} end
+function Node.Return(values) return {values = values} end
 
-function luaO_Node.While(cond, body) return {cond = cond, body = body} end
+function Node.While(cond, body) return {cond = cond, body = body} end
 
 local function with_name(name, ...)
-	local obj = luaO_Node[name](...)
+	local obj = Node[name](...)
 
 	obj.node_name = name
 
@@ -65,7 +62,7 @@ local function with_name(name, ...)
 end
 
 local function with_lex_state(ls, name, ...)
-	local obj = luaO_Node[name](...)
+	local obj = Node[name](...)
 
 	obj.node_name = name
 	obj.node_line = ls.line
@@ -79,6 +76,6 @@ local function with_lex_state(ls, name, ...)
 	return obj
 end
 
-local function luaO_LexState(src) return {comment = {}, line = 1, pos = 1, src = src} end
+local function LexState(src) return {comment = {}, line = 1, pos = 1, src = src} end
 
-return {LexState = luaO_LexState, with_name = with_name, with_lex_state = with_lex_state}
+return {LexState = LexState, with_name = with_name, with_lex_state = with_lex_state}
