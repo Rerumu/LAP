@@ -386,7 +386,7 @@ function luaX_next(ls)
 				cmt = luaX_str_comment(ls)
 			end
 
-			table.insert(ls.cmts, cmt)
+			table.insert(ls.comment, cmt)
 		else
 			break
 		end

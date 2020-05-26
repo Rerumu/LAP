@@ -88,7 +88,7 @@ function str_rule_map.Table(st, expr)
 
 		pad(st)
 
-		if v.nast then -- normal index
+		if v.node_name then -- normal index
 			str_value(st, v)
 		else -- key value pair
 			write(st, '[')
@@ -259,7 +259,7 @@ function str_rule_map.While(st, stat)
 	write(st, 'end')
 end
 
-function str_value(st, value) str_rule_map[value.nast](st, value) end
+function str_value(st, value) str_rule_map[value.node_name](st, value) end
 
 local function new_state() return {buffer = {}, indent = -1, tab = '\t'} end
 
