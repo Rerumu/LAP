@@ -128,7 +128,7 @@ function str_rule_map.Break(st, _) write(st, 'break') end
 
 function str_rule_map.Do(st, stat)
 	write(st, 'do\n')
-	aux_str_stat_list(st, stat)
+	aux_str_stat_list(st, stat.body)
 	pad(st)
 	write(st, 'end')
 end
