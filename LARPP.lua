@@ -516,6 +516,8 @@ lookup_stat_map['::'] = function(ls)
 	return with_lex(ls, 'Label', label)
 end
 
+lookup_stat_map[';'] = lex_next
+
 local function aux_is_named(expr)
 	if expr.node_name == 'Suffixed' then
 		local last = expr.suffixes[#expr.suffixes]
