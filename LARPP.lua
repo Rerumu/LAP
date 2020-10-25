@@ -42,7 +42,7 @@ local function aux_name_to_exp(n)
 end
 
 local function parse_exp_literal(ls, name, value)
-	lex_next(ls) -- `literal`
+	lex_next(ls) -- `value`
 	return with_lex(ls, 'Value', name, value)
 end
 
