@@ -33,7 +33,7 @@ local function aux_exp_ident(ls)
 end
 
 local function aux_name_to_exp(n)
-	n.node_name = 'Literal'
+	n.node_name = 'Value'
 	n.tt = 'String'
 	n.value = n.name
 	n.name = nil
@@ -43,7 +43,7 @@ end
 
 local function parse_exp_literal(ls, name, value)
 	lex_next(ls) -- `literal`
-	return with_lex(ls, 'Literal', name, value)
+	return with_lex(ls, 'Value', name, value)
 end
 
 local function parse_name(ls) return with_lex(ls, 'Name', aux_exp_ident(ls)) end

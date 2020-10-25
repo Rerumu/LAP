@@ -61,7 +61,7 @@ function str_rule_map.Index(st, expr)
 	write(st, ']')
 end
 
-function str_rule_map.Literal(st, expr)
+function str_rule_map.Value(st, expr)
 	local value
 
 	if expr.tt == 'Vararg' then

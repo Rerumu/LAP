@@ -9,7 +9,7 @@ function Node.Call(params) return {params = params} end
 
 function Node.Index(index) return {index = index} end
 
-function Node.Literal(tt, value) return {tt = tt, value = value} end
+function Node.Value(tt, value) return {tt = tt, value = value} end
 
 function Node.Name(name) return {name = name} end
 
