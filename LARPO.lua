@@ -3,25 +3,25 @@ local Node = {}
 
 function Node.BinOp(op, lhs, rhs) return {operator = op, lhs = lhs, rhs = rhs} end
 
-function Node.CallMethod(name, params) return {name = name, params = params} end
-
 function Node.Call(params) return {params = params} end
 
-function Node.Index(index) return {index = index} end
+function Node.CallMethod(name, params) return {name = name, params = params} end
 
-function Node.Value(tt, value) return {tt = tt, value = value} end
+function Node.Index(index) return {index = index} end
 
 function Node.Name(name) return {name = name} end
 
 function Node.Parens(value) return {value = value} end
 
+function Node.Suffixed(prefix, suffixes) return {prefix = prefix, suffixes = suffixes} end
+
 function Node.Table(list, size_array, size_hash)
 	return {list = list, size_array = size_array, size_hash = size_hash}
 end
 
-function Node.Suffixed(prefix, suffixes) return {prefix = prefix, suffixes = suffixes} end
-
 function Node.UnOp(op, rhs) return {operator = op, rhs = rhs} end
+
+function Node.Value(tt, value) return {tt = tt, value = value} end
 
 function Node.Assignment(lhs, rhs) return {lhs = lhs, rhs = rhs} end
 
@@ -29,10 +29,10 @@ function Node.Break() return {} end -- nothing lol
 
 function Node.Do(body) return {body = body} end
 
-function Node.ForIterator(vars, params) return {vars = vars, params = params, body = nil} end
+function Node.ForIterator(vars, params, body) return {vars = vars, params = params, body = body} end
 
-function Node.ForRange(var, start, last, step)
-	return {var = var, start = start, last = last, step = step, body = nil}
+function Node.ForRange(var, start, last, step, body)
+	return {var = var, start = start, last = last, step = step, body = body}
 end
 
 function Node.Function(name, params, body) return {name = name, params = params, body = body} end
