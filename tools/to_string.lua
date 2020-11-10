@@ -60,9 +60,7 @@ end
 function str_rule_map.Value(st, expr)
 	local value
 
-	if expr.tt == 'Vararg' then
-		value = '...'
-	elseif expr.tt == 'String' then
+	if expr.tt == 'String' then
 		value = string.format('%q', expr.value)
 	else
 		value = tostring(expr.value)
@@ -70,6 +68,8 @@ function str_rule_map.Value(st, expr)
 
 	write(st, value)
 end
+
+function str_rule_map.Vararg(st, _) write(st, '...') end
 
 function str_rule_map.Name(st, expr) write(st, expr.name) end
 

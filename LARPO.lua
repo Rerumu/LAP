@@ -23,6 +23,8 @@ function Node.UnOp(op, rhs) return {operator = op, rhs = rhs} end
 
 function Node.Value(tt, value) return {tt = tt, value = value} end
 
+function Node.Vararg() return {} end -- nothing lol
+
 function Node.Assignment(lhs, rhs) return {lhs = lhs, rhs = rhs} end
 
 function Node.Break() return {} end -- nothing lol

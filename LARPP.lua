@@ -46,6 +46,11 @@ local function parse_exp_literal(ls, name, value)
 	return with_lex(ls, 'Value', name, value)
 end
 
+local function parse_vararg(ls)
+	lex_syntax_expect(ls, '...')
+	return with_lex(ls, 'Vararg')
+end
+
 local function parse_name(ls) return with_lex(ls, 'Name', aux_exp_ident(ls)) end
 
 local function parse_name_list(ls)
@@ -66,7 +71,7 @@ local function parse_param_list(ls)
 
 	lex_syntax_expect(ls, '(')
 	while ls.token.name ~= ')' do
-		local var = ls.token.name == '...' and parse_exp_literal(ls, 'Vararg') or parse_name(ls)
+		local var = ls.token.name == '...' and parse_vararg(ls) or parse_name(ls)
 
 		table.insert(params, var)
 
@@ -260,7 +265,7 @@ lookup_exp_map['false'] = function(ls) return parse_exp_literal(ls, 'Boolean', f
 
 lookup_exp_map['nil'] = function(ls) return parse_exp_literal(ls, 'Nil') end
 
-lookup_exp_map['...'] = function(ls) return parse_exp_literal(ls, 'Vararg') end
+lookup_exp_map['...'] = function(ls) return parse_vararg(ls) end
 
 lookup_exp_map['<integer>'] = function(ls)
 	return parse_exp_literal(ls, 'Integer', tonumber(ls.token.slice))
