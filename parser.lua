@@ -8,21 +8,21 @@ local lookup_stat_map = {}
 local lookup_exp_map = {}
 
 do
-	local luaO = require('LARPO')
-	local luaX = require('LARPL')
+	local node = require('node')
+	local lexer = require('lexer')
 
-	LexState = luaO.LexState
-	with_lex = luaO.with_lex_state
+	LexState = node.LexState
+	with_lex = node.with_lex_state
 
-	lex_binary_bind = luaX.binary_bind
-	lex_follows = luaX.follows
-	lex_next = luaX.next
-	lex_syntax_closes = luaX.syntax_closes
-	lex_syntax_error = luaX.syntax_error
-	lex_syntax_expect = luaX.syntax_expect
-	lex_test_next = luaX.test_next
-	lex_unary_bind = luaX.unary_bind
-	lex_unary_bind_value = luaX.unary_bind_value
+	lex_binary_bind = lexer.binary_bind
+	lex_follows = lexer.follows
+	lex_next = lexer.next
+	lex_syntax_closes = lexer.syntax_closes
+	lex_syntax_error = lexer.syntax_error
+	lex_syntax_expect = lexer.syntax_expect
+	lex_test_next = lexer.test_next
+	lex_unary_bind = lexer.unary_bind
+	lex_unary_bind_value = lexer.unary_bind_value
 end
 
 local function aux_exp_ident(ls)
@@ -584,7 +584,7 @@ function parse_stat_list(ls)
 	return stats
 end
 
-local function parse_src2ast(src)
+local function parse_source_to_ast(src)
 	local ls = LexState(src)
 	local stats
 
@@ -602,4 +602,4 @@ local function parse_src2ast(src)
 	return stats
 end
 
-return {src2ast = parse_src2ast}
+return {source_to_ast = parse_source_to_ast}

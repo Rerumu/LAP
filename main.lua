@@ -74,11 +74,11 @@ do -- read files
 end
 
 do -- run program
-	local LARPP = require('LARPP')
+	local parser = require('parser')
 	local fold_const = require('tools.fold_const')
 	local to_string = require('tools.to_string')
 
-	local ast = LARPP.src2ast(source)
+	local ast = parser.source_to_ast(source)
 
 	if flags.fold then ast = fold_const(ast) end
 

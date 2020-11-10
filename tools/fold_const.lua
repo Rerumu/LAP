@@ -1,4 +1,4 @@
-local with_name = require('LARPO').with_name
+local with_name = require('node').with_name
 local const_fold_map = {}
 local bin_op_num_map = {}
 local bin_op_cmp_map = {}
