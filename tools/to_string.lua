@@ -39,9 +39,7 @@ end
 
 function str_rule_map.Call(st, expr)
 	write(st, '(')
-
-	if expr.params then aux_str_cs_list(st, expr.params) end
-
+	aux_str_cs_list(st, expr.params)
 	write(st, ')')
 end
 
@@ -49,9 +47,7 @@ function str_rule_map.CallMethod(st, expr)
 	write(st, ':')
 	write(st, expr.name)
 	write(st, '(')
-
-	if expr.params then aux_str_cs_list(st, expr.params) end
-
+	aux_str_cs_list(st, expr.params)
 	write(st, ')')
 end
 

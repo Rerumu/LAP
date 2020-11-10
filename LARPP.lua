@@ -2,7 +2,7 @@
 local parse_expression, parse_stat_list
 local LexState, with_lex
 local lex_binary_bind, lex_follows, lex_next, lex_syntax_closes, lex_syntax_error,
-						lex_syntax_expect, lex_test_next, lex_unary_bind, lex_unary_bind_value
+	lex_syntax_expect, lex_test_next, lex_unary_bind, lex_unary_bind_value
 
 local lookup_stat_map = {}
 local lookup_exp_map = {}
@@ -155,7 +155,11 @@ local function parse_param_call(ls, name, index)
 		local line = ls.line
 
 		lex_next(ls)
-		if ls.token.name ~= ')' then params = parse_exp_list(ls) end
+		if ls.token.name ~= ')' then
+			params = parse_exp_list(ls)
+		else
+			params = {}
+		end
 
 		lex_syntax_closes(ls, line, '(', ')')
 	elseif name == '{' then
@@ -319,7 +323,7 @@ function parse_expression(ls) return parse_sub_expr(ls, 0) end
 
 local function parse_stat_locfunc(ls)
 	local line = ls.line
-	local name, params, body, func
+	local name, params, body
 
 	lex_next(ls) -- `function`
 	name = parse_name(ls)
@@ -350,7 +354,7 @@ local function parse_stat_for_numeric(ls, var)
 
 	if lex_test_next(ls, ',') then step = parse_expression(ls) end
 
-	return with_lex(ls, 'ForRange', var, start, last, step)
+	return with_lex(ls, 'ForRange', var, start, last, step, nil)
 end
 
 local function parse_stat_for_generic(ls, var)
@@ -366,7 +370,7 @@ local function parse_stat_for_generic(ls, var)
 	lex_syntax_expect(ls, 'in')
 
 	params = parse_exp_list(ls)
-	return with_lex(ls, 'ForIterator', vars, params)
+	return with_lex(ls, 'ForIterator', vars, params, nil)
 end
 
 local function parse_stat_if_sub(ls)
