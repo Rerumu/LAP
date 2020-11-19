@@ -1,10 +1,9 @@
 local with_name = require('node').with_name
-local const_fold_map = {}
+local visitor_fold_map = {}
 local bin_op_num_map = {}
 local bin_op_cmp_map = {}
 local bin_op_map = {}
 local un_op_map = {}
-local fold
 
 local function NO_OP(_, node) return node end
 
@@ -26,20 +25,22 @@ local function as_boolean(value)
 	return nil
 end
 
-local function fold_list(st, param)
+local function visit_node(st, node) return visitor_fold_map[node.node_name](st, node) end
+
+local function visit_list(st, param)
 	local list = {}
 
-	for i, v in ipairs(param) do list[i] = fold(st, v) end
+	for i, v in ipairs(param) do list[i] = visit_node(st, v) end
 
 	return list
 end
 
-local function fold_expr_list(st, param)
+local function visit_expr_list(st, param)
 	local len = #param
 	local list = {}
 
 	for i, v in ipairs(param) do
-		local ret = {fold(st, v)}
+		local ret = {visit_node(st, v)}
 
 		if i == len then
 			for j, w in ipairs(ret) do list[i + j - 1] = w end
@@ -148,16 +149,16 @@ local BIN_OP_COND = {
 	{'Boolean', bin_op_cmp_map, is_comparison},
 }
 
-const_fold_map.Name = NO_OP
-const_fold_map.Value = NO_OP
-const_fold_map.Vararg = NO_OP
-const_fold_map.Break = NO_OP
-const_fold_map.Goto = NO_OP
-const_fold_map.Label = NO_OP
+visitor_fold_map.Name = NO_OP
+visitor_fold_map.Value = NO_OP
+visitor_fold_map.Vararg = NO_OP
+visitor_fold_map.Break = NO_OP
+visitor_fold_map.Goto = NO_OP
+visitor_fold_map.Label = NO_OP
 
-function const_fold_map.BinOp(st, expr)
-	local lhs = fold(st, expr.lhs)
-	local rhs = fold(st, expr.rhs)
+function visitor_fold_map.BinOp(st, expr)
+	local lhs = visit_node(st, expr.lhs)
+	local rhs = visit_node(st, expr.rhs)
 
 	if lhs.node_name == 'Value' and rhs.node_name == 'Value' then
 		local op = expr.operator
@@ -178,26 +179,26 @@ function const_fold_map.BinOp(st, expr)
 	return expr
 end
 
-function const_fold_map.Call(st, expr)
-	local param_list = fold_expr_list(st, expr.params)
+function visitor_fold_map.Call(st, expr)
+	local param_list = visit_expr_list(st, expr.params)
 
 	return with_name('Call', param_list)
 end
 
-function const_fold_map.CallMethod(st, expr)
-	local param_list = fold_expr_list(st, expr.params)
+function visitor_fold_map.CallMethod(st, expr)
+	local param_list = visit_expr_list(st, expr.params)
 
 	return with_name('CallMethod', expr.name, param_list)
 end
 
-function const_fold_map.Index(st, expr)
-	local index = fold(st, expr.index)
+function visitor_fold_map.Index(st, expr)
+	local index = visit_node(st, expr.index)
 
 	return with_name('Index', index)
 end
 
-function const_fold_map.Parens(st, expr)
-	local inner = fold(st, expr.value)
+function visitor_fold_map.Parens(st, expr)
+	local inner = visit_node(st, expr.value)
 
 	if inner.node_name == 'Value' then
 		return inner
@@ -206,29 +207,29 @@ function const_fold_map.Parens(st, expr)
 	end
 end
 
-function const_fold_map.Suffixed(st, expr)
-	local prefix = fold(st, expr.prefix)
-	local suffix_list = fold_list(st, expr.suffixes)
+function visitor_fold_map.Suffixed(st, expr)
+	local prefix = visit_node(st, expr.prefix)
+	local suffix_list = visit_list(st, expr.suffixes)
 
 	return with_name('Suffixed', prefix, suffix_list)
 end
 
-function const_fold_map.Table(st, expr)
+function visitor_fold_map.Table(st, expr)
 	local list = {}
 
 	for i, v in ipairs(expr.list) do
 		if v.node_name then
-			list[i] = fold(st, v)
+			list[i] = visit_node(st, v)
 		else
-			list[i] = {key = fold(st, v.key), value = fold(st, v.value)}
+			list[i] = {key = visit_node(st, v.key), value = visit_node(st, v.value)}
 		end
 	end
 
 	return with_name('Table', list, expr.size_array, expr.size_hash)
 end
 
-function const_fold_map.UnOp(st, expr)
-	local rhs = fold(st, expr.rhs)
+function visitor_fold_map.UnOp(st, expr)
+	local rhs = visit_node(st, expr.rhs)
 	local nn = rhs.node_name
 
 	if nn == 'Value' or nn == 'Table' then expr = un_op_map[expr.operator](rhs) or expr end
@@ -236,47 +237,47 @@ function const_fold_map.UnOp(st, expr)
 	return expr
 end
 
-function const_fold_map.Assignment(st, stat)
-	local lhs_list = fold_list(st, stat.lhs)
-	local rhs_list = fold_expr_list(st, stat.rhs)
+function visitor_fold_map.Assignment(st, stat)
+	local lhs_list = visit_list(st, stat.lhs)
+	local rhs_list = visit_expr_list(st, stat.rhs)
 
 	return with_name('Assignment', lhs_list, rhs_list)
 end
 
-function const_fold_map.Do(st, stat)
-	local list = fold_list(st, stat.body)
+function visitor_fold_map.Do(st, stat)
+	local list = visit_list(st, stat.body)
 
 	return with_name('Do', list)
 end
 
-function const_fold_map.ForIterator(st, stat)
-	local param_list = fold_expr_list(st, stat.params)
-	local body = fold_list(st, stat.body)
+function visitor_fold_map.ForIterator(st, stat)
+	local param_list = visit_expr_list(st, stat.params)
+	local body = visit_list(st, stat.body)
 
 	return with_name('ForIterator', stat.vars, param_list, body)
 end
 
-function const_fold_map.ForRange(st, stat)
-	local start = fold(st, stat.start)
-	local last = fold(st, stat.last)
-	local step = fold(st, stat.step)
-	local body = fold_list(st, stat.body)
+function visitor_fold_map.ForRange(st, stat)
+	local start = visit_node(st, stat.start)
+	local last = visit_node(st, stat.last)
+	local step = visit_node(st, stat.step)
+	local body = visit_list(st, stat.body)
 
 	return with_name('ForRange', stat.var, start, last, step, body)
 end
 
-function const_fold_map.Function(st, stat)
-	local body = fold_list(st, stat.body)
+function visitor_fold_map.Function(st, stat)
+	local body = visit_list(st, stat.body)
 
 	return with_name('Function', stat.name, stat.params, body)
 end
 
-function const_fold_map.If(st, stat)
+function visitor_fold_map.If(st, stat)
 	local list = {}
 	local base = stat.base
 
 	for i, v in ipairs(stat.list) do
-		local sub = {cond = fold(st, v.cond), body = fold_list(st, v.body)}
+		local sub = {cond = visit_node(st, v.cond), body = visit_list(st, v.body)}
 		local val = as_boolean(sub.cond)
 
 		if val == true then
@@ -286,7 +287,7 @@ function const_fold_map.If(st, stat)
 		end
 	end
 
-	if base then base = fold_list(st, base) end
+	if base then base = visit_list(st, base) end
 
 	if #list == 0 then
 		return with_name('Do', base)
@@ -295,19 +296,19 @@ function const_fold_map.If(st, stat)
 	end
 end
 
-const_fold_map.LocalFunction = const_fold_map.Function
+visitor_fold_map.LocalFunction = visitor_fold_map.Function
 
-function const_fold_map.LocalAssignment(st, stat)
+function visitor_fold_map.LocalAssignment(st, stat)
 	local value_list = stat.values
 
-	if value_list then value_list = fold_expr_list(st, value_list) end
+	if value_list then value_list = visit_expr_list(st, value_list) end
 
 	return with_name('LocalAssignment', stat.names, value_list)
 end
 
-function const_fold_map.Repeat(st, stat)
-	local body = fold_list(st, stat.body)
-	local cond = fold(st, stat.cond)
+function visitor_fold_map.Repeat(st, stat)
+	local body = visit_list(st, stat.body)
+	local cond = visit_node(st, stat.cond)
 
 	if as_boolean(cond) == true then
 		return with_name('Do', body)
@@ -316,15 +317,15 @@ function const_fold_map.Repeat(st, stat)
 	end
 end
 
-function const_fold_map.Return(st, stat)
-	local value_list = fold_expr_list(st, stat.values)
+function visitor_fold_map.Return(st, stat)
+	local value_list = visit_expr_list(st, stat.values)
 
 	return with_name('Return', value_list)
 end
 
-function const_fold_map.While(st, stat)
-	local cond = fold(st, stat.cond)
-	local body = fold_list(st, stat.body)
+function visitor_fold_map.While(st, stat)
+	local cond = visit_node(st, stat.cond)
+	local body = visit_list(st, stat.body)
 
 	if as_boolean(cond) == false then
 		return with_name('Do', {})
@@ -333,13 +334,11 @@ function const_fold_map.While(st, stat)
 	end
 end
 
-function fold(st, node) return const_fold_map[node.node_name](st, node) end
-
 local function fold_ast_const(ast)
 	-- (currently) unused state
-	local st = nil
+	local state = nil
 
-	return fold_list(st, ast)
+	return visit_list(state, ast)
 end
 
 return fold_ast_const
