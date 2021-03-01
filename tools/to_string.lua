@@ -61,7 +61,7 @@ end
 function visitor_map.Value(st, expr)
 	local value
 
-	if expr.tt == 'String' then
+	if expr.type == 'String' then
 		value = string.format('%q', expr.value)
 	else
 		value = tostring(expr.value)

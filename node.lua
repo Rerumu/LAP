@@ -21,7 +21,7 @@ end
 
 function Node.UnOp(op, rhs) return {operator = op, rhs = rhs} end
 
-function Node.Value(tt, value) return {tt = tt, value = value} end
+function Node.Value(type, value) return {type = type, value = value} end
 
 function Node.Vararg() return {} end -- nothing lol
 

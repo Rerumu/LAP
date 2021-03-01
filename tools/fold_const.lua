@@ -12,7 +12,7 @@ local function is_numeric(tt) return tt == 'Number' or tt == 'Integer' end
 local function as_boolean(value)
 	if value.node_name ~= 'Value' then return nil end
 
-	local tt = value.tt
+	local tt = value.type
 
 	if is_numeric(tt) or tt == 'String' or tt == 'Table' then
 		return true
@@ -81,7 +81,7 @@ un_op_map['#'] = function(rhs)
 
 	if rhs.node_name == 'Table' and not has_side_effect(rhs) then
 		len = rhs.size_array
-	elseif rhs.tt == 'String' then
+	elseif rhs.type == 'String' then
 		len = #rhs.value
 	end
 
@@ -135,7 +135,7 @@ bin_op_map['or'] = function(lhs, rhs)
 end
 
 local function is_comparison(lhs, rhs)
-	local lhs_tt, rhs_tt = lhs.tt, rhs.tt
+	local lhs_tt, rhs_tt = lhs.type, rhs.type
 
 	if lhs_tt == rhs_tt then
 		return is_numeric(lhs_tt) or lhs_tt == 'String'
@@ -145,7 +145,11 @@ local function is_comparison(lhs, rhs)
 end
 
 local BIN_OP_COND = {
-	{'Number', bin_op_num_map, function(lhs, rhs) return is_numeric(lhs.tt) and is_numeric(rhs.tt) end},
+	{
+		'Number',
+		bin_op_num_map,
+		function(lhs, rhs) return is_numeric(lhs.type) and is_numeric(rhs.type) end,
+	},
 	{'Boolean', bin_op_cmp_map, is_comparison},
 }
 
