@@ -173,7 +173,7 @@ function visitor_fold_map.BinOp(st, expr)
 			end
 		end
 
-		expr = bin_op_map[op](lhs, rhs) or expr
+		if bin_op_map[op] then return bin_op_map[op](lhs, rhs) end
 	end
 
 	return expr
@@ -260,7 +260,7 @@ end
 function visitor_fold_map.ForRange(st, stat)
 	local start = visit_node(st, stat.start)
 	local last = visit_node(st, stat.last)
-	local step = visit_node(st, stat.step)
+	local step = stat.step and visit_node(st, stat.step)
 	local body = visit_list(st, stat.body)
 
 	return with_name('ForRange', stat.var, start, last, step, body)
@@ -318,7 +318,7 @@ function visitor_fold_map.Repeat(st, stat)
 end
 
 function visitor_fold_map.Return(st, stat)
-	local value_list = visit_expr_list(st, stat.values)
+	local value_list = stat.values and visit_expr_list(st, stat.values)
 
 	return with_name('Return', value_list)
 end
