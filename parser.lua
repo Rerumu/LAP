@@ -495,7 +495,7 @@ lookup_stat_map['return'] = function(ls)
 	local values
 
 	lex_next(ls) -- `return`
-	if not lex_follows(ls) then values = parse_exp_list(ls) end
+	if not lex_follows(ls) and ls.token.name ~= ';' then values = parse_exp_list(ls) end
 
 	return with_lex(ls, 'Return', values)
 end
