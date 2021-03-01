@@ -34,7 +34,7 @@ end
 
 local function aux_name_to_exp(n)
 	n.node_name = 'Value'
-	n.tt = 'String'
+	n.type = 'String'
 	n.value = n.name
 	n.name = nil
 
@@ -129,13 +129,12 @@ local function parse_table_constructor(ls)
 			table.insert(list, kvp)
 		else
 			local sub = parse_expression(ls)
-			local is_name = sub.node_name == 'Suffixed' and #sub.suffixes == 0
 
-			if is_name and ls.token.name == '=' then -- hash part
+			if sub.node_name == 'Name' and ls.token.name == '=' then -- hash part
 				local kvp = {}
 				lex_next(ls) -- `=`
 
-				kvp.key = aux_name_to_exp(sub.prefix)
+				kvp.key = aux_name_to_exp(sub)
 				kvp.value = parse_expression(ls)
 
 				size_hash = size_hash + 1
@@ -242,7 +241,11 @@ local function parse_exp_suffixed(ls)
 		table.insert(suffixes, suffix)
 	end
 
-	return with_lex(ls, 'Suffixed', prefix, suffixes)
+	if #suffixes == 0 then
+		return prefix
+	else
+		return with_lex(ls, 'Suffixed', prefix, suffixes)
+	end
 end
 
 lookup_exp_map['{'] = parse_table_constructor
@@ -529,12 +532,10 @@ lookup_stat_map[';'] = lex_next
 
 local function aux_is_named(expr)
 	if expr.node_name == 'Suffixed' then
-		local last = expr.suffixes[#expr.suffixes]
-
-		return not last or last.node_name == 'Index'
+		return expr.suffixes[#expr.suffixes].node_name == 'Index'
+	else
+		return expr.node_name == 'Name'
 	end
-
-	return false
 end
 
 local function parse_stat_exp(ls)
